@@ -78,3 +78,15 @@ def test_create_lead_rejects_invalid_email():
     response = client.post("/leads", json=invalid_lead)
 
     assert response.status_code == 422
+
+
+def test_openapi_documents_duplicate_response():
+    response = client.get("/openapi.json")
+
+    assert response.status_code == 200
+
+    responses = response.json()["paths"]["/leads"]["post"]["responses"]
+
+    assert "200" in responses
+    assert "201" in responses
+    assert responses["200"]["description"] == "Duplicate lead already exists"

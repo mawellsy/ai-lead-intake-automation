@@ -33,3 +33,12 @@ class LeadCreate(BaseModel):
     @classmethod
     def normalize_source(cls, value: str) -> str:
         return value.lower()
+
+
+class LeadResponse(BaseModel):
+    """Response returned after a lead submission."""
+
+    message: str
+    lead_id: str
+    created: bool
+    lead: LeadCreate

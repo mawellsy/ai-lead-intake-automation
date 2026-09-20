@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Response, status
 
 from app.db.lead_repository import save_lead
-from app.schemas import LeadCreate
+from app.schemas import LeadCreate, LeadResponse
 
 
 app = FastAPI(
@@ -15,7 +15,17 @@ def health_check():
     return {"status": "ok"}
 
 
-@app.post("/leads", status_code=status.HTTP_201_CREATED)
+@app.post(
+    "/leads",
+    status_code=status.HTTP_201_CREATED,
+    response_model=LeadResponse,
+    responses={
+        status.HTTP_200_OK: {
+            "model": LeadResponse,
+            "description": "Duplicate lead already exists",
+        }
+    },
+)
 def create_lead(lead: LeadCreate, response: Response):
     result = save_lead(lead)
 
