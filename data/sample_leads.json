@@ -1,0 +1,47 @@
+[
+  {
+    "full_name": "Maya Chen",
+    "email": "maya.chen@example.com",
+    "phone": "+1-555-0101",
+    "service_requested": "Plumbing repair",
+    "message": "A pipe under the kitchen sink burst and water is spreading across the floor.",
+    "city": "Riverton",
+    "source": "website"
+  },
+  {
+    "full_name": "Daniel Brooks",
+    "email": "daniel.brooks@example.com",
+    "phone": "+1-555-0102",
+    "service_requested": "Air conditioner installation",
+    "message": "I would like a quote to replace an old central AC unit next month.",
+    "city": "Lakeside",
+    "source": "website"
+  },
+  {
+    "full_name": "Priya Shah",
+    "email": "priya.shah@example.com",
+    "phone": "+1-555-0103",
+    "service_requested": "HVAC maintenance",
+    "message": "Please schedule routine maintenance for our heating system before winter.",
+    "city": "Riverton",
+    "source": "website"
+  },
+  {
+    "full_name": "Evan Miller",
+    "email": "evan.miller@example.com",
+    "phone": "+1-555-0104",
+    "service_requested": "Electrical repair",
+    "message": "One bedroom outlet stopped working. No smoke or burning smell.",
+    "city": "Westfield",
+    "source": "website"
+  },
+  {
+    "full_name": "Test Duplicate",
+    "email": "duplicate@example.com",
+    "phone": "+1-555-0199",
+    "service_requested": "Quote request",
+    "message": "Please send an estimate for replacing two exterior lights.",
+    "city": "Westfield",
+    "source": "website"
+  }
+]
