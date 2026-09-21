@@ -3,6 +3,7 @@ from openai import OpenAI
 
 from app.ai.openai_provider import OpenAIClassificationProvider
 from app.ai.service import classify_saved_lead
+from app.api.follow_up import router as follow_up_router
 from app.api.orchestration import router as orchestration_router
 from app.config import settings
 from app.db.lead_repository import (
@@ -18,6 +19,7 @@ app = FastAPI(
     version="0.1.0",
 )
 app.include_router(orchestration_router)
+app.include_router(follow_up_router)
 
 
 @app.get("/health")

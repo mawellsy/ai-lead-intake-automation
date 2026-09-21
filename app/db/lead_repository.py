@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import hashlib
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from sqlalchemy import text
@@ -100,7 +100,12 @@ def update_lead_classification(
 ) -> None:
     """Persist validated AI classification results for an existing lead."""
 
-    now = datetime.now(timezone.utc).isoformat()
+    now_value = datetime.now(timezone.utc)
+    now = now_value.isoformat()
+    follow_up_at = None
+
+    if classification.classification.value == "quote_request":
+        follow_up_at = (now_value + timedelta(hours=24)).isoformat()
 
     with db_engine.begin() as connection:
         result = connection.execute(
@@ -112,6 +117,7 @@ def update_lead_classification(
                     urgency = :urgency,
                     ai_summary = :ai_summary,
                     status = :status,
+                    follow_up_at = :follow_up_at,
                     updated_at = :updated_at
                 WHERE id = :lead_id
                 """
@@ -122,6 +128,7 @@ def update_lead_classification(
                 "urgency": classification.urgency.value,
                 "ai_summary": classification.ai_summary,
                 "status": "open",
+                "follow_up_at": follow_up_at,
                 "updated_at": now,
             },
         )
