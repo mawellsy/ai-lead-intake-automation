@@ -54,6 +54,45 @@ def build_dedup_key(lead: LeadCreate) -> str:
     return hashlib.sha256(raw_value.encode("utf-8")).hexdigest()
 
 
+def get_lead(
+    lead_id: str,
+    db_engine: Engine = engine,
+) -> dict | None:
+    """Return one stored lead for API/workflow orchestration."""
+
+    with db_engine.connect() as connection:
+        row = connection.execute(
+            text(
+                """
+                SELECT
+                    id,
+                    full_name,
+                    email,
+                    phone,
+                    service_requested,
+                    message,
+                    city,
+                    created_at,
+                    classification,
+                    urgency,
+                    status,
+                    source,
+                    ai_summary,
+                    follow_up_at,
+                    updated_at
+                FROM leads
+                WHERE id = :lead_id
+                """
+            ),
+            {"lead_id": lead_id},
+        ).mappings().first()
+
+    if row is None:
+        return None
+
+    return dict(row)
+
+
 def update_lead_classification(
     lead_id: str,
     classification: LeadClassification,

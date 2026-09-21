@@ -42,3 +42,23 @@ class LeadResponse(BaseModel):
     lead_id: str
     created: bool
     lead: LeadCreate
+
+
+class LeadRead(BaseModel):
+    """Stored lead returned to workflow/orchestration clients."""
+
+    id: str
+    full_name: str
+    email: EmailStr
+    phone: str | None = None
+    service_requested: str
+    message: str
+    city: str | None = None
+    created_at: str
+    classification: str | None = None
+    urgency: str | None = None
+    status: str
+    source: str
+    ai_summary: str | None = None
+    follow_up_at: str | None = None
+    updated_at: str

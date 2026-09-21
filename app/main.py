@@ -1,14 +1,15 @@
-from fastapi import FastAPI, Response, status
+from fastapi import FastAPI, HTTPException, Response, status
 from openai import OpenAI
 
 from app.ai.openai_provider import OpenAIClassificationProvider
 from app.ai.service import classify_saved_lead
 from app.config import settings
 from app.db.lead_repository import (
+    get_lead,
     mark_lead_for_review,
     save_lead,
 )
-from app.schemas import LeadCreate, LeadResponse
+from app.schemas import LeadCreate, LeadRead, LeadResponse
 
 
 app = FastAPI(
@@ -46,6 +47,19 @@ def classify_new_lead(
         lead,
         provider,
     )
+
+
+@app.get("/leads/{lead_id}", response_model=LeadRead)
+def get_lead_by_id(lead_id: str):
+    lead = get_lead(lead_id)
+
+    if lead is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Lead not found",
+        )
+
+    return lead
 
 
 @app.post(
