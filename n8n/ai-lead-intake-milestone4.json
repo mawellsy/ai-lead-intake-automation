@@ -1,0 +1,900 @@
+{
+  "name": "AI Lead Intake - Milestone 4 Orchestration v2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-lead-intake-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        368
+      ],
+      "id": "cbfa8187-a75e-4e3b-8bd9-b3c74a64293b",
+      "name": "Lead Intake Webhook",
+      "webhookId": "5f071d3a-acc6-4a88-966c-bc29ce09c65c"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/leads",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.body) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        368
+      ],
+      "id": "23b4c424-575b-44cd-8e90-a2abee3c4c22",
+      "name": "Create Lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "7fc3ed38-fc70-4a5c-9e6a-1b6ee23a173d",
+              "leftValue": "={{ String($json.statusCode) }}",
+              "rightValue": "200",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        480,
+        272
+      ],
+      "id": "a547c856-d7e0-473e-91d9-3ee9bb13e511",
+      "name": "Duplicate?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "ba7d7314-eb91-4e37-9a80-d8378416e61e",
+              "leftValue": "={{ String($json.statusCode) }}",
+              "rightValue": "201",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        720,
+        432
+      ],
+      "id": "65929fd6-7cda-452b-8b42-06863f019ea7",
+      "name": "Created?"
+    },
+    {
+      "parameters": {
+        "url": "={{ 'http://127.0.0.1:8000/leads/' + $json.body.lead_id }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        368
+      ],
+      "id": "0ae7e08f-2565-4f74-81ff-5c9bb50a4e2a",
+      "name": "Get Processed Lead"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "53b97523-1e80-452c-80eb-11de79d27a36",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "review",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1200,
+        368
+      ],
+      "id": "d3df2749-ab28-4fc6-a9ed-1778c3274398",
+      "name": "Needs Review?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "a550137a-c7bc-48fa-9b19-eb84a76906a8",
+              "leftValue": "={{ $json.urgency }}",
+              "rightValue": "critical",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "6568ffdd-000b-48fb-8274-9a57ad55eafc",
+              "leftValue": "={{ $json.urgency }}",
+              "rightValue": "high",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1440,
+        464
+      ],
+      "id": "8da8900d-9621-4907-9b33-38c89a752549",
+      "name": "Urgent?"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "d38a5515-ecce-4801-bc29-c45d97c6b23b",
+              "name": "result",
+              "value": "duplicate",
+              "type": "string"
+            },
+            {
+              "id": "e7d9ff0f-5f77-4435-9aa0-1fb74a31d96e",
+              "name": "lead_id",
+              "value": "={{ $('Create Lead').item.json.body.lead_id }}",
+              "type": "string"
+            },
+            {
+              "id": "409131a5-8552-4b7e-b330-80019f4ccd07",
+              "name": "message",
+              "value": "Duplicate lead ignored",
+              "type": "string"
+            },
+            {
+              "id": "b998c3d4-0643-4e0a-98aa-eb18f52e24a2",
+              "name": "created",
+              "value": false,
+              "type": "boolean"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        720,
+        144
+      ],
+      "id": "82b141b1-ec48-4f66-b070-b395b3fd7ecd",
+      "name": "Prepare Duplicate Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "622441aa-261c-43d2-a3e4-023b440d27b7",
+              "name": "result",
+              "value": "api_error",
+              "type": "string"
+            },
+            {
+              "id": "94ece6d3-6e20-426b-8dd3-c0b709d86739",
+              "name": "message",
+              "value": "Lead intake API rejected or failed the request",
+              "type": "string"
+            },
+            {
+              "id": "96453de8-7456-46ad-bbe3-c2c7dcf433d9",
+              "name": "status_code",
+              "value": "={{ $('Create Lead').item.json.statusCode }}",
+              "type": "number"
+            },
+            {
+              "id": "f4d3682e-be3e-4d15-beaf-6ef842c6c349",
+              "name": "details",
+              "value": "={{ JSON.stringify($('Create Lead').item.json.body) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        960,
+        592
+      ],
+      "id": "cf1633b5-2d2c-41f9-8c00-ec51d2c629e6",
+      "name": "Prepare API Failure Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "0942f52a-f644-40f5-8efd-08f9aa71ca76",
+              "name": "result",
+              "value": "review",
+              "type": "string"
+            },
+            {
+              "id": "ec2effbe-1a01-416a-b85f-9482111b2e28",
+              "name": "lead_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "50c9a356-65a3-42c8-8268-879994360381",
+              "name": "status",
+              "value": "={{ $json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "47027a8b-4425-486d-bf8c-993f889d9ad8",
+              "name": "action",
+              "value": "manual_review",
+              "type": "string"
+            },
+            {
+              "id": "b2718b0e-4381-4a9c-a145-e1818baf2e82",
+              "name": "customer_acknowledgement",
+              "value": "We received your request. Our team will review it shortly.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1440,
+        272
+      ],
+      "id": "f8098825-5caa-41fe-9ceb-7c8fd695bf39",
+      "name": "Prepare Review Response"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a296fe66-3d33-4c28-9dd6-e28e88c3568f",
+              "name": "result",
+              "value": "urgent",
+              "type": "string"
+            },
+            {
+              "id": "ac2253e1-e4fb-4b73-9574-af3ef053ccf7",
+              "name": "lead_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "c25178ea-3647-4d9f-8f37-6c238b6ddb77",
+              "name": "urgency",
+              "value": "={{ $json.urgency }}",
+              "type": "string"
+            },
+            {
+              "id": "3706cae1-19c7-4c16-b747-303787f96a7c",
+              "name": "classification",
+              "value": "={{ $json.classification }}",
+              "type": "string"
+            },
+            {
+              "id": "5ae9659c-a46a-41cc-a877-c417464be352",
+              "name": "action",
+              "value": "urgent_staff_notification",
+              "type": "string"
+            },
+            {
+              "id": "c8715fce-9588-4f47-9ea1-8abab5a58c9e",
+              "name": "staff_notification",
+              "value": "={{ 'URGENT lead: ' + $json.full_name + ' | ' + $json.urgency + ' | ' + ($json.ai_summary || '') }}",
+              "type": "string"
+            },
+            {
+              "id": "4082e1d5-ac1d-4a66-9caa-7e111788046e",
+              "name": "customer_acknowledgement",
+              "value": "We received your urgent request. Our team will contact you as soon as possible.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1712,
+        384
+      ],
+      "id": "741a9102-a724-4796-8ad1-0af1ef8104e7",
+      "name": "Prepare Urgent Staff Notification"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3d0ef6d0-eb30-4dbb-a40b-35a3c11eeae0",
+              "name": "result",
+              "value": "queued",
+              "type": "string"
+            },
+            {
+              "id": "326e463a-2328-4963-8850-5364cfee473e",
+              "name": "lead_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "e1d1dbc4-f22f-4066-be80-59d5866b0f7d",
+              "name": "urgency",
+              "value": "={{ $json.urgency || 'normal' }}",
+              "type": "string"
+            },
+            {
+              "id": "aab5b8fc-0e9b-464a-bea3-82ebd93df06b",
+              "name": "classification",
+              "value": "={{ $json.classification || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "2fb1efa5-4792-4867-8489-615f87a3e3f7",
+              "name": "action",
+              "value": "normal_queue",
+              "type": "string"
+            },
+            {
+              "id": "aaaf8cb7-1346-4522-bbc3-371000eb7ac2",
+              "name": "customer_acknowledgement",
+              "value": "Thanks. We received your request and will follow up soon.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1712,
+        544
+      ],
+      "id": "2cb0b045-ff5f-4b9b-8e07-53410e5b4e1e",
+      "name": "Prepare Normal Queue"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json.passthrough || $json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        2448,
+        432
+      ],
+      "id": "47b6be7a-3815-4df1-84ca-bd859aa56617",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "## Milestone 4 v2\n\nThis workflow demonstrates:\n\n- webhook lead intake\n- FastAPI validation, dedupe, persistence, and AI classification\n- lookup of the processed lead\n- urgent / normal / manual-review branching\n- durable internal staff alerts for urgent and review cases\n- customer acknowledgement payloads\n- durable execution logging for every terminal branch\n\nLocal requirements:\n- FastAPI running on `127.0.0.1:8000`\n- n8n running locally\n- API patch `project1-milestone4-logging-and-staff-alerts.patch` applied\n\nTest webhook path:\n`/webhook-test/ai-lead-intake-v2`\n",
+        "height": 300,
+        "width": 520
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "35e12e96-725f-4ede-a91d-aa9ff7d3a543",
+      "name": "Workflow Notes"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/staff-notifications",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Prepare Urgent Staff Notification').item.json.lead_id,\n  customer_name: $('Get Processed Lead').item.json.full_name,\n  urgency: $('Prepare Urgent Staff Notification').item.json.urgency,\n  classification: $('Prepare Urgent Staff Notification').item.json.classification,\n  message: $('Prepare Urgent Staff Notification').item.json.staff_notification\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1952,
+        384
+      ],
+      "id": "362ac23f-0e05-4ae8-9dca-0ce4f7b0ff96",
+      "name": "Persist Urgent Staff Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/staff-notifications",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Prepare Review Response').item.json.lead_id,\n  customer_name: $('Get Processed Lead').item.json.full_name,\n  urgency: $('Get Processed Lead').item.json.urgency || null,\n  classification: $('Get Processed Lead').item.json.classification || null,\n  message: 'Manual review required: ' + $('Get Processed Lead').item.json.full_name + ' | status=' + $('Get Processed Lead').item.json.status + ' | ' + ($('Get Processed Lead').item.json.ai_summary || 'AI classification unavailable')\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1712,
+        240
+      ],
+      "id": "18a5b8c6-3fc6-4f17-86b8-fc8c1f651c64",
+      "name": "Persist Review Staff Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/execution-logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Prepare Duplicate Response').item.json.lead_id,\n  workflow_name: 'AI Lead Intake - Milestone 4 Orchestration v2',\n  outcome: 'duplicate',\n  error_type: null,\n  error_message: null,\n  metadata: $('Prepare Duplicate Response').item.json,\n  passthrough: $('Prepare Duplicate Response').item.json\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1024,
+        144
+      ],
+      "id": "54a4fc22-0a26-47fc-ae71-00d0a7af5fff",
+      "name": "Log Duplicate Execution"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/execution-logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: null,\n  workflow_name: 'AI Lead Intake - Milestone 4 Orchestration v2',\n  outcome: 'failed',\n  error_type: 'lead_api_error',\n  error_message: $('Prepare API Failure Response').item.json.message,\n  metadata: $('Prepare API Failure Response').item.json,\n  passthrough: $('Prepare API Failure Response').item.json\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1200,
+        624
+      ],
+      "id": "3ceaa6f2-e8b0-44d8-a081-5cfd0ce42c4a",
+      "name": "Log API Failure"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/execution-logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Prepare Review Response').item.json.lead_id,\n  workflow_name: 'AI Lead Intake - Milestone 4 Orchestration v2',\n  outcome: 'manual_review',\n  error_type: null,\n  error_message: null,\n  metadata: $('Prepare Review Response').item.json,\n  passthrough: $('Prepare Review Response').item.json\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1984,
+        240
+      ],
+      "id": "e7021aa6-7328-47a1-8eb1-72b07d36c29c",
+      "name": "Log Review Execution"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/execution-logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Prepare Urgent Staff Notification').item.json.lead_id,\n  workflow_name: 'AI Lead Intake - Milestone 4 Orchestration v2',\n  outcome: 'success',\n  error_type: null,\n  error_message: null,\n  metadata: $('Prepare Urgent Staff Notification').item.json,\n  passthrough: $('Prepare Urgent Staff Notification').item.json\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2192,
+        384
+      ],
+      "id": "8a700fea-56a2-4329-91af-8e0257ac6692",
+      "name": "Log Urgent Execution"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/execution-logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Prepare Normal Queue').item.json.lead_id,\n  workflow_name: 'AI Lead Intake - Milestone 4 Orchestration v2',\n  outcome: 'success',\n  error_type: null,\n  error_message: null,\n  metadata: $('Prepare Normal Queue').item.json,\n  passthrough: $('Prepare Normal Queue').item.json\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1984,
+        592
+      ],
+      "id": "6df70cb4-1fbe-427f-8a1d-c4fafed6b8ec",
+      "name": "Log Normal Execution"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Lead Intake Webhook": {
+      "main": [
+        [
+          {
+            "node": "Create Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Lead": {
+      "main": [
+        [
+          {
+            "node": "Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Duplicate Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Created?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Created?": {
+      "main": [
+        [
+          {
+            "node": "Get Processed Lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare API Failure Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Processed Lead": {
+      "main": [
+        [
+          {
+            "node": "Needs Review?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Review?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Review Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Urgent?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Urgent?": {
+      "main": [
+        [
+          {
+            "node": "Prepare Urgent Staff Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Normal Queue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Duplicate Response": {
+      "main": [
+        [
+          {
+            "node": "Log Duplicate Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare API Failure Response": {
+      "main": [
+        [
+          {
+            "node": "Log API Failure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Review Response": {
+      "main": [
+        [
+          {
+            "node": "Persist Review Staff Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Review Staff Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Review Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Urgent Staff Notification": {
+      "main": [
+        [
+          {
+            "node": "Persist Urgent Staff Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Urgent Staff Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Urgent Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Normal Queue": {
+      "main": [
+        [
+          {
+            "node": "Log Normal Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Duplicate Execution": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log API Failure": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Review Execution": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Urgent Execution": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Normal Execution": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b34317fd-a80d-448f-8bbc-edbea850cf73",
+  "meta": {
+    "instanceId": "23dd33e159f72c3536bceee36d5cfecb7add5dee98540d924bfa68ab38383e1f"
+  },
+  "nodeGroups": [],
+  "id": "VtUuPDdsJX0IKhgF",
+  "tags": []
+}
