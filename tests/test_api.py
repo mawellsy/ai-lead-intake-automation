@@ -26,12 +26,22 @@ def test_health_check():
 
 
 def test_create_valid_lead(monkeypatch):
+    classification_calls = []
+
     monkeypatch.setattr(
         main_module,
         "save_lead",
         lambda lead: SaveLeadResult(
             lead_id="lead-123",
             created=True,
+        ),
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "classify_new_lead",
+        lambda lead_id, lead: classification_calls.append(
+            (lead_id, str(lead.email))
         ),
     )
 
@@ -46,15 +56,27 @@ def test_create_valid_lead(monkeypatch):
     assert body["created"] is True
     assert body["lead"]["email"] == "maya.chen@example.com"
     assert body["lead"]["source"] == "website"
+    assert classification_calls == [
+        ("lead-123", "maya.chen@example.com")
+    ]
 
 
 def test_duplicate_lead_returns_existing_id(monkeypatch):
+    classification_calls = []
     monkeypatch.setattr(
         main_module,
         "save_lead",
         lambda lead: SaveLeadResult(
             lead_id="existing-lead-123",
             created=False,
+        ),
+    )
+
+    monkeypatch.setattr(
+        main_module,
+        "classify_new_lead",
+        lambda lead_id, lead: classification_calls.append(
+            (lead_id, str(lead.email))
         ),
     )
 
@@ -67,6 +89,7 @@ def test_duplicate_lead_returns_existing_id(monkeypatch):
     assert body["message"] == "Duplicate lead ignored"
     assert body["lead_id"] == "existing-lead-123"
     assert body["created"] is False
+    assert classification_calls == []
 
 
 def test_create_lead_rejects_invalid_email():

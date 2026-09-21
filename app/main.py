@@ -1,6 +1,13 @@
 from fastapi import FastAPI, Response, status
+from openai import OpenAI
 
-from app.db.lead_repository import save_lead
+from app.ai.openai_provider import OpenAIClassificationProvider
+from app.ai.service import classify_saved_lead
+from app.config import settings
+from app.db.lead_repository import (
+    mark_lead_for_review,
+    save_lead,
+)
 from app.schemas import LeadCreate, LeadResponse
 
 
@@ -13,6 +20,32 @@ app = FastAPI(
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+def classify_new_lead(
+    lead_id: str,
+    lead: LeadCreate,
+):
+    """Classify a newly persisted lead without risking loss of the request."""
+
+    if not settings.openai_api_key or not settings.openai_model:
+        mark_lead_for_review(lead_id)
+        return None
+
+    client = OpenAI(
+        api_key=settings.openai_api_key,
+    )
+
+    provider = OpenAIClassificationProvider(
+        model=settings.openai_model,
+        client=client,
+    )
+
+    return classify_saved_lead(
+        lead_id,
+        lead,
+        provider,
+    )
 
 
 @app.post(
@@ -37,6 +70,11 @@ def create_lead(lead: LeadCreate, response: Response):
             "created": False,
             "lead": lead.model_dump(),
         }
+
+    classify_new_lead(
+        result.lead_id,
+        lead,
+    )
 
     return {
         "message": "Lead created",

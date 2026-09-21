@@ -9,6 +9,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import IntegrityError
 
+from app.ai.schemas import LeadClassification
 from app.db.database import engine
 from app.schemas import LeadCreate
 
@@ -51,6 +52,73 @@ def build_dedup_key(lead: LeadCreate) -> str:
     raw_value = "|".join(components)
 
     return hashlib.sha256(raw_value.encode("utf-8")).hexdigest()
+
+
+def update_lead_classification(
+    lead_id: str,
+    classification: LeadClassification,
+    db_engine: Engine = engine,
+) -> None:
+    """Persist validated AI classification results for an existing lead."""
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    with db_engine.begin() as connection:
+        result = connection.execute(
+            text(
+                """
+                UPDATE leads
+                SET
+                    classification = :classification,
+                    urgency = :urgency,
+                    ai_summary = :ai_summary,
+                    status = :status,
+                    updated_at = :updated_at
+                WHERE id = :lead_id
+                """
+            ),
+            {
+                "lead_id": lead_id,
+                "classification": classification.classification.value,
+                "urgency": classification.urgency.value,
+                "ai_summary": classification.ai_summary,
+                "status": "open",
+                "updated_at": now,
+            },
+        )
+
+        if result.rowcount != 1:
+            raise LookupError(f"Lead not found: {lead_id}")
+
+
+def mark_lead_for_review(
+    lead_id: str,
+    db_engine: Engine = engine,
+) -> None:
+    """Route a lead to manual review when automated processing fails."""
+
+    now = datetime.now(timezone.utc).isoformat()
+
+    with db_engine.begin() as connection:
+        result = connection.execute(
+            text(
+                """
+                UPDATE leads
+                SET
+                    status = :status,
+                    updated_at = :updated_at
+                WHERE id = :lead_id
+                """
+            ),
+            {
+                "lead_id": lead_id,
+                "status": "review",
+                "updated_at": now,
+            },
+        )
+
+        if result.rowcount != 1:
+            raise LookupError(f"Lead not found: {lead_id}")
 
 
 def save_lead(
