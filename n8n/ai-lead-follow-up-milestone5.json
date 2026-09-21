@@ -1,0 +1,233 @@
+{
+  "name": "AI Lead Follow-Up - Milestone 5",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        144,
+        160
+      ],
+      "id": "0c7bcc02-0bf3-4919-9f04-bd484e9c86f4",
+      "name": "Hourly Follow-Up Check"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        144,
+        368
+      ],
+      "id": "bfba1ff1-6d54-49be-9211-cf7e306ff5b4",
+      "name": "Manual Demo Trigger"
+    },
+    {
+      "parameters": {
+        "url": "http://127.0.0.1:8000/follow-ups/due",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        416,
+        272
+      ],
+      "id": "6326db0b-6dcd-4b21-b899-a7568c8ec740",
+      "name": "Get Due Follow-Ups"
+    },
+    {
+      "parameters": {
+        "jsCode": "const due = $json.items ?? [];\nreturn due.map((lead) => ({ json: lead }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        272
+      ],
+      "id": "a49ae084-16ee-4f7e-a28d-e55339e59837",
+      "name": "Split Due Follow-Ups"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ 'http://127.0.0.1:8000/follow-ups/' + $json.id + '/process' }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        928,
+        272
+      ],
+      "id": "6a0c23df-e0e7-495f-a31d-54d9c7a8e6a6",
+      "name": "Process Follow-Up"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/staff-notifications",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Process Follow-Up').item.json.lead_id,\n  customer_name: $('Process Follow-Up').item.json.customer_name,\n  urgency: $('Process Follow-Up').item.json.urgency || null,\n  classification: $('Process Follow-Up').item.json.classification,\n  message: $('Process Follow-Up').item.json.staff_notification\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1216,
+        272
+      ],
+      "id": "b32c7e87-cd1b-4afe-93a8-5c783bbc72c0",
+      "name": "Persist Follow-Up Staff Alert"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/execution-logs",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  lead_id: $('Process Follow-Up').item.json.lead_id,\n  workflow_name: 'AI Lead Follow-Up - Milestone 5',\n  outcome: 'success',\n  error_type: null,\n  error_message: null,\n  metadata: {\n    result: 'follow_up_completed',\n    task_id: $('Process Follow-Up').item.json.task_id,\n    lead_id: $('Process Follow-Up').item.json.lead_id,\n    customer_name: $('Process Follow-Up').item.json.customer_name,\n    email: $('Process Follow-Up').item.json.email,\n    classification: $('Process Follow-Up').item.json.classification,\n    urgency: $('Process Follow-Up').item.json.urgency,\n    due_at: $('Process Follow-Up').item.json.due_at,\n    staff_notification: $('Process Follow-Up').item.json.staff_notification,\n    customer_follow_up: $('Process Follow-Up').item.json.customer_follow_up,\n    completed_at: $('Process Follow-Up').item.json.completed_at\n  }\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1488,
+        272
+      ],
+      "id": "64d72d57-708e-4d39-816f-d3682efa2af9",
+      "name": "Log Follow-Up Execution"
+    },
+    {
+      "parameters": {
+        "content": "## Milestone 5 - Follow-Up Automation\n\nBusiness rule:\n- AI-classified `quote_request` leads are scheduled for follow-up 24 hours later.\n- This workflow checks once per hour.\n- Due leads are claimed exactly once by FastAPI.\n- A durable follow-up task event is created.\n- Staff receives an internal notification.\n- A customer follow-up message is prepared and preserved in the execution log.\n\nFor a portfolio demo, use **Manual Demo Trigger** after moving a synthetic quote lead's `follow_up_at` into the past.\n\nLocal requirements:\n- FastAPI on `127.0.0.1:8000`\n- n8n running locally\n- Milestone 5 backend patch applied\n",
+        "height": 320,
+        "width": 560
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        144,
+        -160
+      ],
+      "id": "e5ffe460-7601-4c5f-b127-d65e80930d67",
+      "name": "Workflow Notes"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Hourly Follow-Up Check": {
+      "main": [
+        [
+          {
+            "node": "Get Due Follow-Ups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Demo Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Due Follow-Ups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Due Follow-Ups": {
+      "main": [
+        [
+          {
+            "node": "Split Due Follow-Ups",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Due Follow-Ups": {
+      "main": [
+        [
+          {
+            "node": "Process Follow-Up",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Follow-Up": {
+      "main": [
+        [
+          {
+            "node": "Persist Follow-Up Staff Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Persist Follow-Up Staff Alert": {
+      "main": [
+        [
+          {
+            "node": "Log Follow-Up Execution",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "fd261c1f-42f2-46ab-bd87-ce6d27cd0282",
+  "meta": {
+    "instanceId": "23dd33e159f72c3536bceee36d5cfecb7add5dee98540d924bfa68ab38383e1f"
+  },
+  "nodeGroups": [],
+  "id": "s75bJ1w8y90sWVzt",
+  "tags": []
+}
