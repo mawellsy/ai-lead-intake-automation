@@ -274,4 +274,6 @@ See [`docs/demo-script.md`](docs/demo-script.md) for a compact two-minute walkth
 
 ## Project status
 
-Milestones 1 through 5 are implemented and tested. Milestone 6 packages the working system as a client-facing portfolio case study with documentation, screenshots, demo material, business-value framing, limitations, and future improvements.
+**Complete.**
+
+Milestones 1 through 6 are implemented, tested, and packaged as a client-facing portfolio project. The repository includes the working FastAPI/n8n automation, automated tests, screenshots, demo material, business-value framing, documented limitations, and production-oriented next steps.
